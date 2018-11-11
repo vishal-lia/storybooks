@@ -11,6 +11,7 @@ const path = require('path');
 // Load Routes
 const index = require('./routes/index');
 const auth = require('./routes/auth');
+const stories = require('./routes/stories');
 
 // MongoDB Connection
 mongoose.connect(process.env.MONGODB_URI, { useNewUrlParser: true })
@@ -53,6 +54,7 @@ app.use((req, res, next) => {
 // Use routes
 app.use('/', index);
 app.use('/auth', auth);
+app.use('/stories', stories);
 
 app.listen(port, () => {
     console.log(`App listening on port ${port}`);
