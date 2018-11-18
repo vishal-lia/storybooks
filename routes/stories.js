@@ -60,7 +60,7 @@ router.post('/', (req, res) => {
 });
 
 // Show Single Story
-router.get('/show/:id', ensureAuthenticated, (req, res) => {
+router.get('/show/:id', (req, res) => {
     Story.findById(req.params.id)
         .populate('user')
         .populate('comments.commentUser')
