@@ -1,76 +1,13 @@
-require('./config');
+const cluster = require('cluster');
+const os = require('os');
 
-const express = require('express');
-const mongoose = require('mongoose');
-const exphbs = require('express-handlebars');
-const bodyParser = require('body-parser');
-const methodOverride = require('method-override');
-const cookieParser = require('cookie-parser');
-const session = require('express-session');
-const passport = require('passport');
-const path = require('path');
+if(cluster.isMaster) {
+	const cpus = os.cpus().length;
 
-// Load Routes
-const index = require('./routes/index');
-const auth = require('./routes/auth');
-const stories = require('./routes/stories');
-
-// Handlebars Helpers
-const { truncate, stripTags, formatDate, select, editIcon } = require('./helpers/hbs');
-
-// MongoDB Connection
-mongoose.connect(process.env.MONGODB_URI, { useNewUrlParser: true })
-    .then(() => { console.log('MongoDB connected'); })
-    .catch(err => console.log(err));
-
-const app = express();
-const port = process.env.PORT || 3000;
-
-// Passport Config
-require('./config/passport')(passport);
-
-// Public Folder
-app.use(express.static(path.join(__dirname, 'public')));
-
-// BodyParser middleware
-app.use(bodyParser.urlencoded({extended: false}));
-
-// Method Override middleware
-app.use(methodOverride('_method'));
-
-// Handlebars middleware
-app.engine('handlebars', exphbs({ 
-        helpers: { truncate, stripTags, formatDate, select, editIcon }, 
-        defaultLayout: 'main'
-}));
-
-app.set('view engine', 'handlebars');
-
-app.use(cookieParser());
-app.use(session({
-    secret: process.env.SESSION_SECRET,
-    cookie: {
-        maxAge: 60 * 60 * 1000 // 1hr
-    },
-    resave: false,
-    saveUninitialized: false
-}))
-
-// Passport middleware
-app.use(passport.initialize());
-app.use(passport.session());
-
-// Set Global variables
-app.use((req, res, next) => {
-    res.locals.user = req.user || null;
-    next();
-});
-
-// Use routes
-app.use('/', index);
-app.use('/auth', auth);
-app.use('/stories', stories);
-
-app.listen(port, () => {
-    console.log(`App listening on port ${port}`);
-});
+	console.log(`Forking for ${cpus} CPUS`);
+	for(let i = 0; i < cpus; i++) {
+		cluster.fork();
+	}
+} else {
+	require('./server');
+}
